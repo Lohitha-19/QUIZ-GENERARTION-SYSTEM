@@ -1,4 +1,4 @@
-import { useLocation, Link, Navigate } from 'react-router-dom'
+import { useLocation, Navigate } from 'react-router-dom'
 import Header from '../../components/Header'
 
 export default function QuizResult() {

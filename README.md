@@ -47,25 +47,22 @@ AI Quiz Generator System is a comprehensive web application designed to simplify
 
 ## Tech Stack
 
-**Backend:**
-- **Node.js** & **Express.js** (REST API framework)
-- **MongoDB** with **Mongoose** for document schema management
-- **Multer** for multipart document file uploads
-- **Nodemailer** for Gmail SMTP password reset emails
-- **JSON Web Tokens (JWT)** & **Bcrypt.js** for secure user authentication
-- **Axios** & **Form-Data** for microservice communication
+## Tech Stack
 
-**AI Service:**
-- **FastAPI** (Python web framework for high-performance AI microservices)
+**Backend (Python):**
+- **FastAPI** (High-performance Python web framework for REST API & AI integration)
 - **Uvicorn** for asynchronous ASGI server execution
-- **Google Generative AI SDK** (`google-generativeai` with `gemini-1.5-flash`)
+- **Motor** & **Beanie** for async MongoDB ODM
+- **Google Generative AI SDK** (`google-generativeai` with `gemini-2.5-flash`)
 - **PyMuPDF** (`fitz`), **python-docx**, and **python-pptx** for multi-format text extraction
-- **Pydantic** & **python-dotenv** for request validation and environment management
+- **python-jose** & **passlib[bcrypt]** for JWT authentication and password hashing
+- **aiosmtplib** for asynchronous Gmail SMTP password reset emails
+- **Pydantic** & **python-dotenv** for schema validation and environment management
 
 **Frontend:**
 - **React 18** (UI component framework)
 - **React Router DOM v6** for SPA navigation
-- **Axios** for API data fetching
+- **Axios** for API data fetching (proxied to port 8000)
 - Custom **Glassmorphism CSS** design system with modern dark themes
 
 ---
@@ -73,8 +70,8 @@ AI Quiz Generator System is a comprehensive web application designed to simplify
 ## Quick Start Guide
 
 ### Prerequisites
-- **Node.js** 16+ & `npm`
 - **Python** 3.10+
+- **Node.js** 16+ & `npm`
 - **MongoDB** (Local instance or MongoDB Atlas cluster)
 - **Google Gemini API Key** ([Get your API key](https://aistudio.google.com/))
 
@@ -88,11 +85,11 @@ git clone https://github.com/your-username/quiz-generator-system.git
 cd quiz-generator-system
 ```
 
-2. **Set up AI Service (FastAPI)**
+2. **Set up Backend (FastAPI Python)**
 ```bash
-cd ai-service
+cd backend
 
-# Create virtual environment
+# Create virtual environment (optional but recommended)
 python -m venv venv
 
 # Activate virtual environment
@@ -107,32 +104,15 @@ pip install -r requirements.txt
 # Create environment configuration
 cp .env.example .env
 ```
-*Edit `ai-service/.env` and add your `GEMINI_API_KEY`.*
-
-Start the AI Service:
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-3. **Set up Backend Server (Node/Express)**
-Open a new terminal:
-```bash
-cd backend
-
-# Install dependencies
-npm install
-
-# Create environment configuration
-cp .env.example .env
-```
-*Edit `backend/.env` with your `MONGO_URI`, `JWT_SECRET`, and optional `EMAIL_USER`/`EMAIL_PASS`.*
+*Edit `backend/.env` and configure `MONGO_URI`, `JWT_SECRET`, and `GEMINI_API_KEY`.*
 
 Start the Backend server:
 ```bash
-npm run dev
+uvicorn main:app --reload --port 8000
 ```
+Interactive API docs are available at `http://localhost:8000/docs`.
 
-4. **Set up Frontend App (React)**
+3. **Set up Frontend App (React)**
 Open another terminal:
 ```bash
 cd frontend

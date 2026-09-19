@@ -9,10 +9,15 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Handle 401 globally
+// Handle errors globally
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    if (err.response?.data && !err.response.data.message && err.response.data.detail) {
+      err.response.data.message = typeof err.response.data.detail === 'string'
+        ? err.response.data.detail
+        : JSON.stringify(err.response.data.detail)
+    }
     if (err.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')

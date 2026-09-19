@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Header from '../../components/Header'
 import api from '../../utils/api'
@@ -22,6 +22,10 @@ export default function QuizAttempt() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
+  // Synchronous lock refs to guarantee single submission
+  const isSubmittingRef = useRef(false)
+  const lastSwitchTimeRef = useRef(0)
+
   // Fetch quiz detail without answers
   useEffect(() => {
     const loadQuiz = async () => {
@@ -39,38 +43,47 @@ export default function QuizAttempt() {
     loadQuiz()
   }, [shareLink])
 
-  // Timer
+  // Timer countdown
   useEffect(() => {
     if (!hasStarted || timeLeft <= 0 || !quiz) return
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer)
-          handleSubmit(true)
           return 0
         }
         return prev - 1
       })
     }, 1000)
     return () => clearInterval(timer)
-  }, [hasStarted, timeLeft, quiz])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasStarted, quiz])
+
+  // Auto-submit once when timer reaches 0
+  useEffect(() => {
+    if (!hasStarted || !quiz || quiz.settings.timeLimit <= 0) return
+    if (timeLeft === 0 && !isSubmittingRef.current) {
+      handleSubmit(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, hasStarted, quiz])
 
   // Tab switch detection
   useEffect(() => {
     if (!hasStarted || !quiz) return
 
-    let lastSwitchTime = 0
-
     const recordViolation = () => {
       const now = Date.now()
       // Ignore duplicate events within 1 second (e.g. visibilitychange + blur firing together)
-      if (now - lastSwitchTime < 1000) return
-      lastSwitchTime = now
+      if (now - lastSwitchTimeRef.current < 1000) return
+      lastSwitchTimeRef.current = now
 
       setTabSwitches(prev => {
         const newCount = prev + 1
         if (newCount >= quiz.settings.tabSwitchLimit) {
-          setTimeout(() => handleSubmit(true), 0)
+          if (!isSubmittingRef.current) {
+            handleSubmit(true)
+          }
         } else {
           setShowWarning(true)
           setTimeout(() => setShowWarning(false), 5000)
@@ -93,6 +106,7 @@ export default function QuizAttempt() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('blur', handleBlur)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasStarted, quiz])
 
   const handleStart = async (e) => {
@@ -122,8 +136,11 @@ export default function QuizAttempt() {
   }
 
   const handleSubmit = async (auto = false) => {
-    if (submitting) return
+    // Synchronous check-and-set lock prevents parallel/duplicate calls
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
     setSubmitting(true)
+
     try {
       const { data } = await api.post(`/student/quiz/${shareLink}/submit`, {
         studentName,
@@ -145,6 +162,7 @@ export default function QuizAttempt() {
       navigate(`/quiz/${shareLink}/result`, { state: { result: data.result }, replace: true })
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to submit quiz')
+      isSubmittingRef.current = false
       setSubmitting(false)
     }
   }

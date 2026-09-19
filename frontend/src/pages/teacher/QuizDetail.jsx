@@ -21,7 +21,10 @@ export default function QuizDetail() {
     }
   }
 
-  useEffect(() => { fetchDetail() }, [id])
+  useEffect(() => {
+    fetchDetail()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   const copyLink = () => {
     const url = `${window.location.origin}/quiz/${quiz.shareLink}`
